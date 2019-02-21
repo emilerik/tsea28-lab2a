@@ -38,6 +38,8 @@
 ;*
 ;* Used together with offset constants defined below
 ;*
+;* GIT TEST
+;*
 ;*****************************************************
 UART0_base   .equ    0x4000c000    ; Start adress for UART
 
@@ -144,8 +146,46 @@ Rightstar   .string "                    *",13,10,0
 
 main:
 
-mainloop:            ; Remove
-    b    mainloop    ; Remove
+	mov r0,#0x0203
+	movt r0,#0x0001
+	mov r1,#0x1213
+	movt r1,#0x1011
+	mov r2,#0x2223
+	movt r2,#0x2021
+	mov r3,#0x3233
+	movt r3,#0x3031
+	mov r4,#0x4243
+	movt r4,#0x4041
+	mov r5,#0x5253
+	movt r5,#0x5051
+	mov r6,#0x6263
+	movt r6,#0x6061
+	mov r7,#0x7273
+	movt r7,#0x7071
+	mov r8,#0x8283
+	movt r8,#0x8081
+	mov r9,#0x9293
+	movt r9,#0x9091
+	mov r10,#0xA2A3
+	movt r10,#0xA0A1
+	mov r11,#0xB2B3
+	movt r11,#0xB0B1
+	mov r12,#0xC2C3
+	movt r12,#0xC0C1
+
+	bl inituart
+	bl initGPIOD
+	bl initGPIOF
+	bl initint
+
+
+mainloop:
+	CPSID I
+	bl SKBAK
+	CPSIE I
+	mov r1,#1000
+	bl DELAY
+	b mainloop
 
 
     .align 0x100    ; Place interrupt routine for GPIO port D
@@ -155,22 +195,39 @@ mainloop:            ; Remove
 ;* Place your interrupt routine for GPIO port D here
 ;*
 intgpiod:
+; Here is the interrupt routine triggered by port D
+	mov r0, #0xffff	; value to be stored in ICR
 
-                    ; Here is the interrupt routine triggered by port D
+	mov r1,#(GPIOD_GPIOICR & 0xffff)	; point to ICR adress
+	movt r1,#(GPIOD_GPIOICR >> 16)
 
+	str r0,[r1] ; clear value in ICR
 
+	push {lr}
+	bl SKAVH
+	pop {lr}
 
+	bx lr
     .align 0x100    ; Place interrupt routine for GPIO port F at an adress that ends with two zeros
+
 ;***********************************************
 ;*
 ;* Place your interrupt routine for GPIO port F here
 ;*
 intgpiof:
-                     ; Here is the interrupt routine triggered by port F
+; Here is the interrupt routine triggered by port F
+	mov r0, #0xffff	; value to be stored in ICR
 
+	mov r1,#(GPIOF_GPIOICR & 0xffff)	; point to ICR adress
+	movt r1,#(GPIOF_GPIOICR >> 16)
 
+	str r0,[r1] ; clear value in ICR
 
+	push {lr}
+	bl SKAVV
+	pop {lr}
 
+	bx lr
     .align 0x100    ; Next routine is started at an adress in the program memory that ends with two zeros
 ;*******************************************************************************************************
 ;*
